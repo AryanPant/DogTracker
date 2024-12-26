@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time GPS Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        #map { height: 100vh; width: 100vw; margin: 0; }
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Real-Time GPS Tracker</h1>
+    <div id="map"></div>
+    <script>
+        const FIREBASE_DB_URL = "https://dog-tracker-b1dd7-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";  // Firebase DB URL
+
+        var map = L.map('map').setView([0, 0], 13);  // Initialize map at [0, 0]
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        var marker = L.marker([0, 0]).addTo(map);
+        var pathCoordinates = [];  // To store the dog's path
+        var polyline = L.polyline(pathCoordinates, { color: 'blue' }).addTo(map);  // Initialize polyline
+
+        var currentPosition = { lat: 0, lon: 0 };
+
+        async function updateMap() {
+            console.log("Fetching GPS data from Firebase...");
+            try {
+                const response = await fetch(FIREBASE_DB_URL);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    const newLat = data.lat;
+                    const newLon = data.lon;
+                    console.log(`Received data from Firebase - Lat: ${newLat}, Lon: ${newLon}`);
+
+                    if (isNaN(newLat) || isNaN(newLon)) {
+                        console.error("Invalid GPS data received from Firebase.");
+                        return;
+                    }
+
+                    // Smoothly animate the marker
+                    animateMarker(currentPosition.lat, currentPosition.lon, newLat, newLon, 1000);
+
+                    // Add the new position to the path
+                    pathCoordinates.push([newLat, newLon]);
+                    polyline.setLatLngs(pathCoordinates);  // Update the polyline with the new path
+
+                    // Update current position
+                    currentPosition = { lat: newLat, lon: newLon };
+                } else {
+                    console.error("Error fetching data from Firebase:", response.status);
+                }
+            } catch (error) {
+                console.error("Error in updateMap:", error);
+            }
+        }
+
+        function animateMarker(startLat, startLon, endLat, endLon, duration) {
+            const steps = 60; // Number of animation frames
+            const interval = duration / steps;
+            let step = 0;
+
+            const latStep = (endLat - startLat) / steps;
+            const lonStep = (endLon - startLon) / steps;
+
+            function moveMarker() {
+                if (step <= steps) {
+                    const currentLat = startLat + step * latStep;
+                    const currentLon = startLon + step * lonStep;
+
+                    marker.setLatLng([currentLat, currentLon]); // Smoothly update marker position
+                    map.panTo([currentLat, currentLon]); // Keep map centered on marker
+                    step++;
+                    setTimeout(moveMarker, interval); // Schedule the next frame
+                }
+            }
+
+            moveMarker();
+        }
+
+        // Update map every 2 seconds
+        setInterval(updateMap, 2000);
+    </script>
+</body>
+</html>
+
