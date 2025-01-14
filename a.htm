@@ -5,13 +5,30 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        #map { height: 100vh; width: 100vw; margin: 0; }
-        body { margin: 0; padding: 0; }
+        #map { height: 90vh; width: 100vw; margin: 0; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; }
+        #zoomButton { 
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            z-index: 1000; 
+            background-color: white; 
+            border: 2px solid #ccc; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); 
+            border-radius: 5px; 
+            font-size: 14px;
+        }
+        #zoomButton:hover {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
     <h1 style="text-align: center;">Real-Time GPS Tracker</h1>
     <div id="map"></div>
+    <button id="zoomButton">Zoom to Max</button>
     <script>
         const FIREBASE_DB_URL = "https://dog-tracker-b1dd7-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";  // Firebase DB URL
 
@@ -82,9 +99,13 @@
             moveMarker();
         }
 
+        // Add event listener to the zoom button
+        document.getElementById("zoomButton").addEventListener("click", function() {
+            map.setZoom(map.getMaxZoom()); // Zoom to the maximum level
+        });
+
         // Update map every 2 seconds
         setInterval(updateMap, 2000);
     </script>
 </body>
 </html>
-
