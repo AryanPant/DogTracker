@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #0077b6;
+      --background: #f0f4f8;
+      --card-bg: #ffffff;
+      --text-dark: #023047;
+      --text-muted: #555;
+      --icon-bg: linear-gradient(135deg, #caf0f8, #90e0ef);
+      --shadow: 0 6px 24px rgba(0, 119, 182, 0.08), 0 1.5px 6px rgba(0,0,0,0.04);
+    }
+
+    [data-theme="dark"] {
+      --primary: #90e0ef;
+      --background: #1a1a2e;
+      --card-bg: #273043;
+      --text-dark: #ffffff;
+      --text-muted: #bbb;
+      --icon-bg: linear-gradient(135deg, #3a506b, #1c2541);
+      --shadow: 0 6px 24px rgba(0,0,0,0.4), 0 1px 4px rgba(0,0,0,0.2);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--background);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+      transition: background 0.3s ease;
+    }
+
+    h1 {
+      margin-bottom: 2rem;
+      color: var(--text-dark);
+      font-size: 2.6rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .toggle-theme {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      cursor: pointer;
+      font-size: 1.2rem;
+      background: var(--card-bg);
+      color: var(--text-dark);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    /* Big Time Section Styles */
+    .big-time-section {
+      background: var(--card-bg);
+      border-radius: 2rem;
+      box-shadow: var(--shadow);
+      padding: 2.5rem 3rem;
+      margin-bottom: 2.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .big-time-section:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 119, 182, 0.15), 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .big-time {
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .big-time i {
+      font-size: 3rem;
+      background: var(--icon-bg);
+      padding: 0.8rem;
+      border-radius: 50%;
+      color: var(--primary);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    .big-date {
+      font-size: 1.4rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    @media (max-width: 700px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 32px rgba(0, 119, 182, 0.15), 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .icon {
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+      background: var(--icon-bg);
+      color: var(--primary);
+      padding: 0.7rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+
+    .card:hover .icon {
+      transform: rotate(10deg) scale(1.1);
+    }
+
+    .card h2 {
+      margin: 0.5rem 0;
+      font-size: 1.3rem;
+      color: var(--primary);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .card p {
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      margin: 0.2rem 0;
+    }
+
+    .unit {
+      font-size: 1rem;
+      color: var(--text-muted);
+      opacity: 0.75;
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: var(--shadow);
+      min-width: 320px;
+      max-width: 95vw;
+      position: relative;
+    }
+    .close-modal {
+      position: absolute;
+      top: 0.7rem;
+      right: 1.2rem;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    /* Circular Slider Styles */
+    .circular-slider-container {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    .circular-slider-value {
+      pointer-events: none;
+    }
+
+    @media (max-width: 680px) {
+      .big-time-section {
+        padding: 2rem 1.5rem;
+      }
+      
+      .big-time {
+        font-size: 2.8rem;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .big-time i {
+        font-size: 2.5rem;
+        padding: 0.6rem;
+      }
+      
+      .big-date {
+        font-size: 1.2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+      }
+
+      .big-time {
+        font-size: 2.4rem;
+      }
+      
+      .big-time i {
+        font-size: 2rem;
+        padding: 0.5rem;
+      }
+      
+      .big-date {
+        font-size: 1.1rem;
+      }
+
+      .card {
+        padding: 2rem 1.2rem;
+      }
+
+      .icon {
+        font-size: 2.4rem;
+      }
+
+      .card p {
+        font-size: 2rem;
+      }
+      .modal-content {
+        min-width: 0;
+        width: 95vw;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="toggle-theme" onclick="toggleTheme()">
+    🌙 Toggle Theme
+  </div>
+
+  <h1>Weather Dashboard</h1>
+
+  <!-- Big Time Section -->
+  <div class="big-time-section" data-aos="fade-down">
+    <div class="big-time"><i class="fas fa-clock"></i> <span id="bigTime">--:--:-- --</span></div>
+    <div class="big-date" id="bigDate">Loading...</div>
+  </div>
+
+  <div class="dashboard">
+    <!-- Temperature Card with Circular Slider -->
+    <div class="card" data-aos="zoom-in" style="position:relative;">
+      <div class="circular-slider-container" style="margin-bottom:1rem;">
+        <canvas id="tempSlider" width="100" height="100"></canvas>
+        <div class="circular-slider-value" id="tempValue" style="font-size:2.2rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;color:var(--primary);width:100%;text-align:center;"></div>
+      </div>
+      <span class="icon" onclick="showChart('temp')"><i class="fas fa-temperature-high"></i></span>
+      <h2>Temperature</h2>
+      <p id="temp">--</p>
+      <span class="unit">°C</span>
+    </div>
+    <!-- Humidity Card with Circular Slider -->
+    <div class="card" data-aos="zoom-in" data-aos-delay="100" style="position:relative;">
+      <div class="circular-slider-container" style="margin-bottom:1rem;">
+        <canvas id="humiditySlider" width="100" height="100"></canvas>
+        <div class="circular-slider-value" id="humidityValue" style="font-size:2.2rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;color:#1e90ff;width:100%;text-align:center;"></div>
+      </div>
+      <span class="icon" onclick="showChart('humidity')"><i class="fas fa-tint"></i></span>
+      <h2>Humidity</h2>
+      <p id="humidity">--</p>
+      <span class="unit">%</span>
+    </div>
+    <!-- Rainfall Card with Circular Slider -->
+    <div class="card" data-aos="zoom-in" data-aos-delay="200" style="position:relative;">
+      <div class="circular-slider-container" style="margin-bottom:1rem;">
+        <canvas id="rainfallSlider" width="100" height="100"></canvas>
+        <div class="circular-slider-value" id="rainfallValue" style="font-size:2.2rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;color:#00b894;width:100%;text-align:center;"></div>
+      </div>
+      <span class="icon" onclick="showChart('rainfall')"><i class="fas fa-cloud-rain"></i></span>
+      <h2>Rainfall</h2>
+      <p id="rainfall">--</p>
+      <span class="unit">mm</span>
+    </div>
+    <!-- Pressure Card with Circular Slider -->
+    <div class="card" data-aos="zoom-in" data-aos-delay="300" style="position:relative;">
+      <div class="circular-slider-container" style="margin-bottom:1rem;">
+        <canvas id="pressureSlider" width="100" height="100"></canvas>
+        <div class="circular-slider-value" id="pressureValue" style="font-size:2.2rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;color:#6c5ce7;width:100%;text-align:center;"></div>
+      </div>
+      <span class="icon" onclick="showChart('pressure')"><i class="fas fa-gauge-high"></i></span>
+      <h2>Pressure</h2>
+      <p id="pressure">--</p>
+      <span class="unit">hPa</span>
+    </div>
+  </div>
+
+  <!-- Modal for charts -->
+  <div class="modal" id="chartModal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal()">&times;</span>
+      <h2 id="chartTitle"></h2>
+      <canvas id="metricChart" width="350" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      duration: 800,
+      once: true
+    });
+
+    function toggleTheme() {
+      const body = document.body;
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      body.setAttribute('data-theme', newTheme);
+      document.querySelector('.toggle-theme').textContent =
+        newTheme === 'light' ? '🌙 Toggle Theme' : '☀️ Toggle Theme';
+    }
+
+    // --- Real-time Clock Logic ---
+    function updateTime() {
+      const now = new Date();
+      
+      // Format time (12-hour with AM/PM)
+      const timeOptions = {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      };
+      const timeString = now.toLocaleTimeString('en-US', timeOptions);
+      
+      // Format date
+      const dateOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      };
+      const dateString = now.toLocaleDateString('en-US', dateOptions);
+      
+      // Update DOM elements
+      document.getElementById('bigTime').textContent = timeString;
+      document.getElementById('bigDate').textContent = dateString;
+    }
+
+    // Initialize clock and update every second
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // --- Firebase Fetch Logic ---
+    const FIREBASE_HOST = "dog-tracker-b1dd7-default-rtdb.asia-southeast1.firebasedatabase.app";
+    const FIREBASE_API_KEY = "AIzaSyDYigFmC5UND8wcb5oU7JIhrvyRUFC5clM";
+    const FIREBASE_URL = https://${FIREBASE_HOST}/weather_data.json?auth=${FIREBASE_API_KEY};
+
+    // Store chart history for modal
+    let chartHistory = {
+      temp: [],
+      humidity: [],
+      pressure: []
+    };
+
+    // Fetch latest weather data from Firebase and update UI
+    async function fetchWeather() {
+      try {
+        const res = await fetch(FIREBASE_URL);
+        const data = await res.json();
+
+        // Get the latest entry (if list), else use direct object
+        let latest = data;
+        if (data && typeof data === "object" && !Array.isArray(data) && Object.keys(data).length > 0 && data.hasOwnProperty('dht22')) {
+          latest = data;
+        } else if (data && typeof data === "object" && Object.keys(data).length > 0) {
+          latest = Object.values(data).pop();
+        }
+
+        // Extract values safely
+        const temp = latest?.dht22?.temperature ?? '--';
+        const humidity = latest?.dht22?.humidity ?? '--';
+        const pressure = latest?.bmp280?.pressure ?? '--';
+
+        // Update UI values
+        document.getElementById('temp').textContent = temp;
+        document.getElementById('humidity').textContent = humidity;
+        document.getElementById('pressure').textContent = pressure;
+
+        document.getElementById('tempValue').textContent = temp;
+        drawCircularSlider('tempSlider', Number(temp) || 0, -10, 50, "#ff7675");
+
+        document.getElementById('humidityValue').textContent = humidity;
+        drawCircularSlider('humiditySlider', Number(humidity) || 0, 0, 100, "#1e90ff");
+
+        document.getElementById('pressureValue').textContent = pressure;
+        drawCircularSlider('pressureSlider', Number(pressure) || 0, 950, 1050, "#6c5ce7");
+
+        updateChartHistory({
+          temperature: Number(temp),
+          humidity: Number(humidity),
+          pressure: Number(pressure)
+        });
+      } catch (e) {
+        console.error("Failed to fetch weather data:", e);
+      }
+    }
+
+    // Keep only last 7 values for chart
+    function updateChartHistory(data) {
+      if (typeof data.temperature === "number" && !isNaN(data.temperature)) {
+        chartHistory.temp.push(data.temperature);
+        if (chartHistory.temp.length > 7) chartHistory.temp.shift();
+      }
+      if (typeof data.humidity === "number" && !isNaN(data.humidity)) {
+        chartHistory.humidity.push(data.humidity);
+        if (chartHistory.humidity.length > 7) chartHistory.humidity.shift();
+      }
+      if (typeof data.pressure === "number" && !isNaN(data.pressure)) {
+        chartHistory.pressure.push(data.pressure);
+        if (chartHistory.pressure.length > 7) chartHistory.pressure.shift();
+      }
+    }
+
+    // Poll Firebase every 5 seconds for real-time updates
+    fetchWeather();
+    setInterval(fetchWeather, 5000);
+
+    // --- Chart Modal Logic ---
+    let chartInstance = null;
+    const chartLabels = ['7 ago', '6 ago', '5 ago', '4 ago', '3 ago', '2 ago', 'Latest'];
+    const chartMeta = {
+      temp: { label: 'Temperature (°C)', color: '#ff7675' },
+      humidity: { label: 'Humidity (%)', color: '#1e90ff' },
+      pressure: { label: 'Pressure (hPa)', color: '#6c5ce7' }
+    };
+
+    function showChart(metric) {
+      const modal = document.getElementById('chartModal');
+      const ctx = document.getElementById('metricChart').getContext('2d');
+      document.getElementById('chartTitle').textContent = chartMeta[metric].label + ' - Last 7 Updates';
+      modal.style.display = 'flex';
+
+      if (chartInstance) chartInstance.destroy();
+
+      // Pad chart data to always show 7 points
+      let dataArr = chartHistory[metric].slice(-7);
+      while (dataArr.length < 7) dataArr.unshift(null);
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            label: chartMeta[metric].label,
+            data: dataArr,
+            borderColor: chartMeta[metric].color,
+            backgroundColor: chartMeta[metric].color + '33',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointBackgroundColor: chartMeta[metric].color,
+            pointBorderWidth: 2
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.y !== null ? context.parsed.y : '';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#888', font: { weight: 'bold' } }
+            },
+            y: {
+              beginAtZero: false,
+              grid: { color: '#eee' },
+              ticks: { color: '#888' }
+            }
+          }
+        }
+      });
+    }
+
+    function closeModal() {
+      document.getElementById('chartModal').style.display = 'none';
+      if (chartInstance) chartInstance.destroy();
+    }
+
+    // Close modal on outside click
+    window.onclick = function(event) {
+      const modal = document.getElementById('chartModal');
+      if (event.target === modal) closeModal();
+    };
+
+    // Improved circular slider (fixes double arc and ensures smoothness)
+    function drawCircularSlider(canvasId, value, min, max, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const size = canvas.width;
+      ctx.clearRect(0, 0, size, size);
+
+      // Background circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/2-8, 0, 2 * Math.PI);
+      ctx.strokeStyle = "#e0e0e0";
+      ctx.lineWidth = 10;
+      ctx.shadowBlur = 0;
+      ctx.stroke();
+      ctx.restore();
+
+      // Foreground arc
+      const percent = Math.max(0, Math.min(1, (value-min)/(max-min)));
+      if (percent > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(size/2, size/2, size/2-8, -Math.PI/2, -Math.PI/2 + percent*2*Math.PI, false);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 10;
+        ctx.lineCap = "round";
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Optionally, call these again on window resize for responsiveness:
+    window.addEventListener('resize', fetchWeather);
+  </script>
+</body>
+</html>
