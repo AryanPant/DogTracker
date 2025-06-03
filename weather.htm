@@ -317,16 +317,16 @@
       <p id="humidity">--</p>
       <span class="unit">%</span>
     </div>
-    <!-- Rainfall Card with Circular Slider -->
+    <!-- Altitude Card with Circular Slider -->
     <div class="card" data-aos="zoom-in" data-aos-delay="200" style="position:relative;">
       <div class="circular-slider-container" style="margin-bottom:1rem;">
-        <canvas id="rainfallSlider" width="100" height="100"></canvas>
-        <div class="circular-slider-value" id="rainfallValue" style="font-size:2.2rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;color:#00b894;width:100%;text-align:center;"></div>
+        <canvas id="altitudeSlider" width="100" height="100"></canvas>
+        <div class="circular-slider-value" id="altitudeValue" style="font-size:2.2rem;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;color:#00b894;width:100%;text-align:center;"></div>
       </div>
-      <span class="icon" onclick="showChart('rainfall')"><i class="fas fa-cloud-rain"></i></span>
-      <h2>Rainfall</h2>
-      <p id="rainfall">--</p>
-      <span class="unit">mm</span>
+      <span class="icon" onclick="showChart('altitude')"><i class="fas fa-mountain"></i></span>
+      <h2>Altitude</h2>
+      <p id="altitude">--</p>
+      <span class="unit">m</span>
     </div>
     <!-- Pressure Card with Circular Slider -->
     <div class="card" data-aos="zoom-in" data-aos-delay="300" style="position:relative;">
@@ -407,7 +407,8 @@
     let chartHistory = {
       temp: [],
       humidity: [],
-      pressure: []
+      pressure: [],
+      altitude: []
     };
 
     // Fetch latest weather data from Firebase and update UI
@@ -428,11 +429,13 @@
         const temp = latest?.dht22?.temperature ?? '--';
         const humidity = latest?.dht22?.humidity ?? '--';
         const pressure = latest?.bmp280?.pressure ?? '--';
+        const altitude = latest?.bmp280?.altitude ?? '--';
 
         // Update UI values
         document.getElementById('temp').textContent = temp;
         document.getElementById('humidity').textContent = humidity;
         document.getElementById('pressure').textContent = pressure;
+        document.getElementById('altitude').textContent = altitude;
 
         document.getElementById('tempValue').textContent = temp;
         drawCircularSlider('tempSlider', Number(temp) || 0, -10, 50, "#ff7675");
@@ -443,10 +446,14 @@
         document.getElementById('pressureValue').textContent = pressure;
         drawCircularSlider('pressureSlider', Number(pressure) || 0, 950, 1050, "#6c5ce7");
 
+        document.getElementById('altitudeValue').textContent = altitude;
+        drawCircularSlider('altitudeSlider', Number(altitude) || 0, 0, 1000, "#00b894");
+
         updateChartHistory({
           temperature: Number(temp),
           humidity: Number(humidity),
-          pressure: Number(pressure)
+          pressure: Number(pressure),
+          altitude: Number(altitude)
         });
       } catch (e) {
         console.error("Failed to fetch weather data:", e);
@@ -467,6 +474,10 @@
         chartHistory.pressure.push(data.pressure);
         if (chartHistory.pressure.length > 7) chartHistory.pressure.shift();
       }
+      if (typeof data.altitude === "number" && !isNaN(data.altitude)) {
+        chartHistory.altitude.push(data.altitude);
+        if (chartHistory.altitude.length > 7) chartHistory.altitude.shift();
+      }
     }
 
     // Poll Firebase every 5 seconds for real-time updates
@@ -479,7 +490,8 @@
     const chartMeta = {
       temp: { label: 'Temperature (°C)', color: '#ff7675' },
       humidity: { label: 'Humidity (%)', color: '#1e90ff' },
-      pressure: { label: 'Pressure (hPa)', color: '#6c5ce7' }
+      pressure: { label: 'Pressure (hPa)', color: '#6c5ce7' },
+      altitude: { label: 'Altitude (m)', color: '#00b894' }
     };
 
     function showChart(metric) {
